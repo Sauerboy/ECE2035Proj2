@@ -108,6 +108,46 @@ TEST(AccessTest, GetSingleKey)
   destroyHashTable(ht);    // dummy item is also freed here
 }
 
+TEST(AccessTest, GetMultiKey)
+{
+  HashTable* ht = createHashTable(hash, BUCKET_NUM);
+
+  // Create list of items
+  size_t num_items = 3;
+  HTItem* m[num_items];
+  make_items(m, num_items);
+
+  insertItem(ht, 0, m[0]);
+  insertItem(ht, 1, m[1]);
+  insertItem(ht, 2, m[2]);
+  EXPECT_EQ(m[0], getItem(ht, 0));
+  EXPECT_EQ(m[1], getItem(ht, 1));
+  EXPECT_EQ(m[2], getItem(ht, 2));
+
+  destroyHashTable(ht);    // dummy item is also freed here
+}
+
+TEST(AccessTest, GetMultiSameKey)
+{
+  HashTable* ht = createHashTable(hash, BUCKET_NUM);
+
+  // Create list of items
+  size_t num_items = 4;
+  HTItem* m[num_items];
+  make_items(m, num_items);
+
+  insertItem(ht, 0, m[0]);
+  insertItem(ht, 1, m[1]);
+  insertItem(ht, 2, m[2]);
+  free(insertItem(ht, 2, m[3])); //must free the value insert returns
+  //EXPECT_EQ(m[0], getItem(ht, 0));
+  EXPECT_EQ(m[0], getItem(ht, 0));
+  EXPECT_EQ(m[1], getItem(ht, 1));
+  EXPECT_EQ(m[3], getItem(ht, 2));
+
+  destroyHashTable(ht);    // dummy item is also freed here
+}
+
 TEST(AccessTest, GetKey_KeyNotPresent)
 {
 	HashTable* ht = createHashTable(hash, BUCKET_NUM);
@@ -157,6 +197,43 @@ TEST(RemoveTest, SingleValidRemove)
 	destroyHashTable(ht);
 }
 
+TEST(RemoveTest, AccessTest_GetMultiKey_Test)
+{
+	HashTable* ht = createHashTable(hash, BUCKET_NUM);
+
+	// Create a list of items to add to hash table.
+	size_t num_items = 4;
+	HTItem* m[num_items];
+	make_items(m, num_items);
+
+	// Insert one item into the hash table.
+	insertItem(ht, 0, m[0]);
+	insertItem(ht, 1, m[1]);
+	free(insertItem(ht, 1, m[2]));
+	insertItem(ht, 2, m[3]);
+
+	// After removing an item with a specific key, the data stored in the
+	// corresponding entry should be returned. If the key is not present in the
+	// hash table, then NULL should be returned.
+	void* data[3];
+	data[0] = removeItem(ht, 0);
+	data[1] = removeItem(ht, 1);
+	data[2] = removeItem(ht, 2);
+
+	// Since the key we want to remove is present in the hash table, the correct
+	// data should be returned.
+	EXPECT_EQ(m[0], data[0]);
+	EXPECT_EQ(m[2], data[1]);
+	EXPECT_EQ(m[3], data[2]);
+
+	// Free the data
+	free(data[0]);
+	free(data[1]);
+	free(data[2]);
+
+	destroyHashTable(ht);
+}
+
 TEST(RemoveTest, SingleInvalidRemove)
 {
 	HashTable* ht = createHashTable(hash, BUCKET_NUM);
@@ -193,4 +270,29 @@ TEST(InsertTest, InsertAsOverwrite)
 
 	destroyHashTable(ht);
 	free(m[0]);    // don't forget to free item 0
+}
+
+TEST(InsertTest, InsertAsNew)
+{
+	HashTable* ht = createHashTable(hash, BUCKET_NUM);
+
+	// Create list of items to be added to the hash table.
+	size_t num_items = 2;
+	HTItem* m[num_items];
+	make_items(m, num_items);
+
+	// Only insert one item with key=0 into the hash table.
+	insertItem(ht, 0, m[0]);
+
+	// When we are inserting a different value with different key=1, the hash table
+	// entry should hold the new value instead. In the test case, the hash table entry
+	// corresponding to key=1 will hold m[1] as the return value.
+	EXPECT_EQ(NULL, insertItem(ht, 1, m[1]));
+
+	// Now check if the new value m[1] has indeed been stored in hash table with
+	// key=1.
+	EXPECT_EQ(m[1], getItem(ht,1));
+
+	destroyHashTable(ht);
+	// free(m[0]); Why wouldn't hash table free it automatically?    don't forget to free item 0
 }

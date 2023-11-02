@@ -177,10 +177,22 @@ void destroyHashTable(HashTable *hashTable)
     // 1. Loop through each bucket of the hash table to remove all items.
     //      1a. set temp to be the first entry of the ith bucket
     //      1b. delete all entries
-       
+    int i = 0;
+    HashTableEntry* entry;
+    HashTableEntry* next;
+       while(i < hashTable->num_buckets) {
+        entry = hashTable->buckets[i++];
+            while(entry) {
+                next = entry->next;
+                free(entry->value);
+                free(entry);
+                entry=next;
+            }
+       }
     // 2. Free buckets
-    
+    free(hashTable->buckets);
     // 3. Free hash table
+    free(hashTable);
 }
 
 void *insertItem(HashTable *hashTable, unsigned int key, void *value)
@@ -195,11 +207,11 @@ void *insertItem(HashTable *hashTable, unsigned int key, void *value)
         return oldVal;
     }
     //3. If not, create entry for new value and return NULL
-    HashTableEntry* entry = createHashTableEntry(key, value);
+    item = createHashTableEntry(key, value);
     int bucketNum = hashTable->hash(key);
     HashTableEntry* temp = hashTable->buckets[bucketNum];
-    hashTable->buckets[bucketNum] = entry;
-    entry->next = temp;
+    hashTable->buckets[bucketNum] = item;
+    item->next = temp;
 
     return NULL;
 }
@@ -229,11 +241,21 @@ void *removeItem(HashTable *hashTable, unsigned int key)
     // TODO: Implement
     //Remove the item in hash table based on the key and return the old value stored in it.
     //In other words, free the hash table entry from heap and return its old value
- 
+
     //1. Get the bucket number and the head entry
-    
+    int bucketNum = hashTable->hash(key);
+    HashTableEntry* entry = hashTable->buckets[bucketNum];
+    void* value;
     //2. If the head holds the key, change the head to the next value, and return the old value
-    
+    while(entry) {
+        if(entry->key == key) {
+            hashTable->buckets[bucketNum] = entry->next;
+            value = entry->value;
+            free(entry);
+            return value;
+        }
+        entry = entry->next;
+    }
     //3. If not the head, search for the key to be removed 
     
     //4. If the key is not present in the list, return NULL
@@ -252,4 +274,6 @@ void deleteItem(HashTable *hashTable, unsigned int key)
     // You're basically clearing the memory
  
     //1. Remove the entry and free the returned data
+    void* value = removeItem;
+    free(value);
 }
