@@ -245,19 +245,30 @@ void *removeItem(HashTable *hashTable, unsigned int key)
     //1. Get the bucket number and the head entry
     int bucketNum = hashTable->hash(key);
     HashTableEntry* entry = hashTable->buckets[bucketNum];
+    HashTableEntry* next;
     void* value;
+
+    if(!entry) {
+        return NULL;
+    }
     //2. If the head holds the key, change the head to the next value, and return the old value
-    while(entry) {
-        if(entry->key == key) {
-            hashTable->buckets[bucketNum] = entry->next;
-            value = entry->value;
-            free(entry);
-            return value;
-        }
-        entry = entry->next;
+    if (entry->key == key) {
+        hashTable->buckets[bucketNum] = entry->next;
+        value = entry->value;
+        free(entry);
+        return value;
     }
     //3. If not the head, search for the key to be removed 
-    
+    while(entry->next) {
+        next = entry->next;
+        if(next->key == key) {
+            value = next->value;
+            entry->next = next->next;
+            free(next);
+            return value;
+        }
+        entry = next;
+    }
     //4. If the key is not present in the list, return NULL
     return NULL;
     //5. Unlink node from the list, free, and return old value
@@ -274,6 +285,6 @@ void deleteItem(HashTable *hashTable, unsigned int key)
     // You're basically clearing the memory
  
     //1. Remove the entry and free the returned data
-    void* value = removeItem;
+    void* value = removeItem(hashTable, key);
     free(value);
 }
