@@ -262,6 +262,7 @@ void *removeItem(HashTable *hashTable, unsigned int key)
     while(entry->next) {
         next = entry->next;
         if(next->key == key) {
+        //4. Unlink node from the list, free, and return old value
             value = next->value;
             entry->next = next->next;
             free(next);
@@ -269,9 +270,9 @@ void *removeItem(HashTable *hashTable, unsigned int key)
         }
         entry = next;
     }
-    //4. If the key is not present in the list, return NULL
+    //5. If the key is not present in the list, return NULL
     return NULL;
-    //5. Unlink node from the list, free, and return old value
+    
 }
 
 void deleteItem(HashTable *hashTable, unsigned int key)

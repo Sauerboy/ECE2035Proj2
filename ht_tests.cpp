@@ -175,7 +175,7 @@ TEST(AccessTest, GetMultiKey)
   EXPECT_EQ(m[1], getItem(ht, 1));
   EXPECT_EQ(m[2], getItem(ht, 2));
 
-  destroyHashTable(ht);    // dummy item is also freed here
+  destroyHashTable(ht);    // dummy items are also freed here
 }
 
 TEST(AccessTest, GetMultiSameKey)
@@ -191,12 +191,11 @@ TEST(AccessTest, GetMultiSameKey)
   insertItem(ht, 1, m[1]);
   insertItem(ht, 2, m[2]);
   free(insertItem(ht, 2, m[3])); //must free the value insert returns
-  //EXPECT_EQ(m[0], getItem(ht, 0));
   EXPECT_EQ(m[0], getItem(ht, 0));
   EXPECT_EQ(m[1], getItem(ht, 1));
   EXPECT_EQ(m[3], getItem(ht, 2));
 
-  destroyHashTable(ht);    // dummy item is also freed here
+  destroyHashTable(ht);    // dummy items are also freed here
 }
 
 TEST(AccessTest, GetKey_KeyNotPresent)
@@ -388,7 +387,7 @@ TEST(RemoveTest, RemoveInvalidKey)
 	void* data;
 	data = removeItem(ht, 9);
 
-	// Since the key we want to remove is present in the hash table, the correct
+	// Since the key we want to remove is not present in the hash table, NULL
 	// data should be returned.
 	EXPECT_EQ(NULL, data);
 
@@ -431,18 +430,30 @@ TEST(DeleteTest, DeleteValidKey)
 	HTItem* m[num_items];
 	make_items(m, num_items);
 
-	// Insert one item into the hash table.
+	// Insert items into the hash table.
 	insertItem(ht, 0, m[0]);
 	insertItem(ht, 3, m[1]);
 	insertItem(ht, 6, m[2]);
-	// After removing an item with a specific key, the data stored in the
-	// corresponding entry should be returned. If the key is not present in the
-	// hash table, then NULL should be returned.
+	// Delete the item
 	deleteItem(ht, 3);
 
 	EXPECT_EQ(m[0], getItem(ht, 0));
 	EXPECT_EQ(NULL, getItem(ht, 3));
 	EXPECT_EQ(m[2], getItem(ht, 6));
+	
+	destroyHashTable(ht);
+}
+
+TEST(DeleteTest, DeleteNullValue)
+{
+	HashTable* ht = createHashTable(hash, BUCKET_NUM);
+
+	// Insert items into the hash table.
+	insertItem(ht, 0, NULL);
+	// Delete the NULL item
+	deleteItem(ht, 0);
+	// Should not be able to find item and return NULL
+	EXPECT_EQ(NULL, getItem(ht, 0));
 	
 	destroyHashTable(ht);
 }
@@ -485,6 +496,31 @@ TEST(InsertTest, InsertAsOverwrite)
 	free(m[0]);    // don't forget to free item 0
 }
 
+TEST(InsertTest, InsertNullAsOverwrite)
+{
+	HashTable* ht = createHashTable(hash, BUCKET_NUM);
+
+	// Create list of items to be added to the hash table.
+	size_t num_items = 1;
+	HTItem* m[num_items];
+	make_items(m, num_items);
+
+	// Only insert one item with key=0 into the hash table.
+	insertItem(ht, 0, m[0]);
+
+	// When we are inserting a different value with the same key=0, the hash table
+	// entry should hold the new value instead. In the test case, the hash table entry
+	// corresponding to key=0 will hold NULL and return m[0] as the return value.
+	EXPECT_EQ(m[0], insertItem(ht, 0, NULL));
+
+	// Now check if the NULL has indeed been stored in hash table with
+	// key=0.
+	EXPECT_EQ(NULL, getItem(ht,0));
+
+	destroyHashTable(ht);
+	free(m[0]);    // don't forget to free item 0
+}
+
 TEST(InsertTest, InsertAsNew)
 {
 	HashTable* ht = createHashTable(hash, BUCKET_NUM);
@@ -498,7 +534,7 @@ TEST(InsertTest, InsertAsNew)
 	insertItem(ht, 0, m[0]);
 
 	// When we are inserting a different value with different key=1, the hash table
-	// entry should hold the new value instead. In the test case, the hash table entry
+	// entry should hold this value. In the test case, the hash table entry
 	// corresponding to key=1 will hold m[1] as the return value.
 	EXPECT_EQ(NULL, insertItem(ht, 1, m[1]));
 
